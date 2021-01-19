@@ -53,7 +53,7 @@ A: As it has unique features below:
     impl From<serde_json::value::Value> for Response
     ```
 
-    [`shared_state`](src/bin/shared_state.rs) is the demo to show how to setup request handler. You can run the 
+    [`basic_server`](src/bin/basic_server.rs) is the demo to show how to setup request handler. You can run the 
     demo by running:
 
     ```bash
@@ -140,7 +140,7 @@ A: As it has unique features below:
     });
     ```
 
-    [`shared_state`](src/bin/basic_server.rs) is the demo to show how to setup share state. You can run the 
+    [`shared_state`](src/bin/shared_state.rs) is the demo to show how to setup share state. You can run the 
     demo by running:
 
     ```bash
@@ -171,6 +171,24 @@ A: As it has unique features below:
 
 - ## Serve static files
 
+    ```rust
+    // Serve static files
+    let mut static_images_serve_route = server.at("/images");
+    let _ = static_images_serve_route.serve_dir("images/");
+    ```
+
+    [`serve_static_files`](src/bin/serve_static_files.rs) is the demo to show how to setup static files serving. You can run the 
+    demo by running:
+
+    ```bash
+    cargo watch --exec "run --bin serve_static_files"
+    ```
+
+    And then open the below url in your browser to view the sample image:
+
+    ```bash
+    http://localhost:8080/images/preview-4.png
+    ```
     </br>
 
 - ## Listen to multiple addresses

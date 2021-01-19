@@ -40,6 +40,8 @@ impl DeviceResponseSessions {
 
 #[async_std::main]
 async fn main() -> tide::Result<()> {
+    println!("[ Shared State Demo ]\n");
+
     let share_sessions = Arc::new(DeviceResponseSessions::new());
     let mut server = tide::with_state(ShareState {
         sessions: Arc::clone(&share_sessions),
