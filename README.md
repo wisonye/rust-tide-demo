@@ -415,8 +415,15 @@ curl localhost:8080/status-code-test-4
     Then you can run commands below to test it:
     
     ```bash
-    curl localhost:8080/status-code-test-1
-    # {"status_code":"401","success":false}
+    curl --header "Authorization: demo-token" localhost:8080/home
+    # {"user":{"name":"Wison","role":"Administrator"}}
+    
+    curl --header "Authorization: wrong_token" localhost:8080/home
+    # {"errorCode":"401","errorMessage":"Token is invalid."}
+    
+    curl localhost:8080/home
+    # {"errorCode":"401","errorMessage":"Token is invalid."}
+    ```
 
-</br>
+    </br>
 
