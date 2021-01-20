@@ -263,3 +263,57 @@ A: As it has unique features below:
 
     </br>
 
+- Dealing with `Status code`
+
+    Usually, you got several approaches to attach the specified `status code` to the `Response`:
+
+    ```rust
+    # Create `Response` with the `StatusCode`
+    let response = Response::new(StatusCode::Ok);
+    let response = Response::new(StatusCode::Unauthorized);
+    let response = Response::new(StatusCode::NotFound);
+    let response = Response::new(StatusCode::BadRequest);
+    let response = Response::new(StatusCode::InternalServerError);
+    
+
+    # Reset after created
+    let mut response = Response::new(StatusCode::Ok);
+    response.set_status(404);
+    response.set_status(StatusCode::InternalServerError);
+
+
+    # Create with `ResponseBuilder`
+    Response::builder(StatusCode::Unauthorized)
+        .header("Content-Type", "application/json")
+        .body(serde_json::json!({
+            "success": status_code.is_success(),
+            "status_code": status_code.to_string()
+        }))
+        .build()
+    ```
+
+    [`status_code`](src/bin/status_code.rs) is the demo to show how to setup status code.
+    You can run the demo by running:
+
+    ```bash
+    cargo watch --exec "run --bin status_code"
+    ```
+
+    Then you can run commands below to test it:
+
+    ```bash
+    curl localhost:8080/status-code-test-1
+    # {"status_code":"401","success":false}
+
+    curl localhost:8080/status-code-test-2
+    # {"status_code":"400","success":false}
+
+    curl localhost:8080/status-code-test-3
+    # {"status_code":"404","success":false}
+
+    curl localhost:8080/status-code-test-4
+    # {"status_code":"500","success":false}
+    ```
+
+    </br>
+
