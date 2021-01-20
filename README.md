@@ -347,7 +347,7 @@ curl localhost:8080/status-code-test-4
 
     - Implement the `tide::Middleware` trait:
 
-        The `handle` async function can either continue processing (possibly modifying the response) or 
+        The `handle` async function can either continue processing by calling `Ok(next.run(request).await)` or 
         immediately return a response.
 
         ```rust
