@@ -192,6 +192,74 @@ A: As it has unique features below:
     </br>
 
 - ## Listen to multiple addresses
+    
+    `Server.bind()` accepts an `impl ToListener<State>` and return the `impl Listener<State>` instance.
+
+    So you can use  `Server.bind()` to bind multiple targets before calling `Listener.accept()`. All types
+    can be passed into `Server.bind()` must implement the `ToListener` trait. By default, all types below
+    already implemented the `ToListener` trait:
+
+    ```rust
+    String
+    &str
+    Vec<String>
+    Vec<&str>
+    ```
+
+    But you're not easy to implement the `ToListener` trait for your own struct, as the `ParsedListener` is
+    private. The sample below won't be compiled:
+
+    ```rust
+    ///
+    struct LocalBindingTargetA(u32);
+    //
+    impl<State> tide::listener::ToListener<State> for LocalBindingTargetA
+    where
+        State: Clone + Send + Sync + 'static,
+    {
+        type Listener = tide::listener::ParsedListener<State>;
+        //
+        fn to_listener(self) -> async_std::io::Result<Self::Listener> {
+            tide::listener::ToListener::<State>::to_listener(format!("localhost::{}", self.0))
+        }
+    }
+    ```
+
+    The `Server.listen()` just a shortcut to call `Server.bind().accept()`.
+
+    That means `server.listen(listen_targets).await?;` can be written as:
+
+    ```rust
+    let listen_targets = vec!["localhost:8080", "127.0.0.1:9000"];
+    let mut listener: ConcurrentListener<()> = server.bind(listen_targets).await?;
+    listener.accept().await?;
+    ```
+
+    [`multiple_binding`](src/bin/multiple_binding.rs) is the demo to show how to setup multiple bindings. 
+    You can run the demo by running:
+
+    ```bash
+    cargo watch --exec "run --bin multiple_binding"
+    ```
+
+    After that, you should see the console log llike below:
+
+    ```bash
+    [ Multiple Binding Demo ]
+    
+    tide::log Logger started
+        level Info
+    Server is listening on: http://[::1]:8080
+    
+    Server is listening on: http://127.0.0.1:9000
+    ```
+
+    Then, you can run the command below to test it:
+
+    ```bash
+    curl localhost:8080
+    curl localhost:9000
+    ```
 
     </br>
 
