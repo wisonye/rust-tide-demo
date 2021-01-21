@@ -454,11 +454,11 @@ curl --data '{ "username": "wison", "password": "demo" }' localhost:8080/auth
 
 # `/home` without token should fail
 curl localhost:8080/home
-{"errorCode":"401","errorMessage":"Token is invalid."}
+# {"errorCode":"401","errorMessage":"Token is invalid."}
 
 # `/home` with wrong token should fail
 curl --header "Authorization: jwt xxxx" localhost:8080/home
-{"errorCode":"401","errorMessage":"Token is invalid."}
+# {"errorCode":"401","errorMessage":"Token is invalid."}
 
 
 # `/home` with correct token should success
