@@ -427,3 +427,64 @@ curl localhost:8080/status-code-test-4
 
     </br>
 
+## 8. JWT Authentication middleware
+
+[`jwt_middleware`](src/bin/jwt_middleware.rs) is the demo to show how to implement the JWT
+authentication middleware and API based on that.  You can run the demo by running:
+
+```bash
+cargo watch --exec "run --bin jwt_rest_api"
+```
+
+Then you can run commands below to test it:
+
+```bash
+# Login fail
+curl --request POST localhost:8080/auth
+# {"errorMessage":"'username' and 'password' is required.","success":false}
+
+# Login fail
+curl --data '{ "username": "xxx", "password": "demo" }' localhost:8080/auth
+# {"errorMessage":"'username' or 'password' is invalid.","success":false}
+
+# Login correctly and get back the JWT token
+curl --data '{ "username": "wison", "password": "demo" }' localhost:8080/auth
+# {"success":true,"token":"eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoie1wibmFtZVwiOlwiV2lzb24gWWVcIixcInJvbGVcIjpcIkFkbWluaXN0cmF0b3JcIn0ifQ.Sf0kbnrP9AwQfd4YmeCt029PrMCEQAsqScizvWvYEpo"}
+
+
+# `/home` without token should fail
+curl localhost:8080/home
+{"errorCode":"401","errorMessage":"Token is invalid."}
+
+# `/home` with wrong token should fail
+curl --header "Authorization: jwt xxxx" localhost:8080/home
+{"errorCode":"401","errorMessage":"Token is invalid."}
+
+
+# `/home` with correct token should success
+curl --header "Authorization: eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoie1wibmFtZVwiOlwiV2lzb24gWWVcIixcInJvbGVcIjpcIkFkbWluaXN0cmF0b3JcIn0ifQ.Sf0kbnrP9AwQfd4YmeCt029PrMCEQAsqScizvWvYEpo" localhost:8080/home
+
+# tide::log::middleware <-- Request received
+#     method GET
+#     path /home
+# [ Middleware trait --> handle ] - url path: /home
+# [ Middleware trai --> handle ] - token_str: eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoie1wibmFtZVwiOlwiV2lzb24gWWVcIixcInJvbGVcIjpcIkFkbWluaXN0cmF0b3JcIn0ifQ.Sf0kbnrP9AwQfd4YmeCt029PrMCEQAsqScizvWvYEpo
+# [ JwtUtil --> verfiy_token, decoded_value: Object({
+#     "user": String(
+#         "{\"name\":\"Wison Ye\",\"role\":\"Administrator\"}",
+#     ),
+# })
+# [ Home Route ] - jwt_user: User {
+#     name: "Wison Ye",
+#     role: "Administrator",
+# }
+# tide::log::middleware --> Response sent
+#     method GET
+#     path /home
+#     status 200 - OK
+#     duration 289.824µs
+#
+# {"currentUser":{"name":"Wison Ye","role":"Administrator"},"dashboard":"Here is the Dashboard","success":true}
+```
+</br>
+
