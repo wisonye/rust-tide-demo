@@ -1,11 +1,23 @@
 # `Tide` tutorial
 
-Q: Why use `tide` as the `Rust` HTTP crate?
+Why use `tide` to write HTTP/HTTPS server/service in `Rust`?
 
-A: As it has unique features below:
+As it has unique features below:
 
 - Based on `async-std`, simple, powerful and extremely fast.
 - Combines some of the best ideas from frameworks like `Rocket`, `Actix`, and `Gotham`.
+
+</br>
+
+This repo will cover the following topics:
+
+- [How easy to build basic server](./src/bin/basic_server.rs)
+- [How to share state](./src/bin/shared_state.rs)
+- [How to serve static files](./src/bin/serve_static_files.rs)
+- [How to listen to multiple address](./src/bin/multiple_binding.rs) 
+- [How easy to deal with `status` code](./src/bin/status_code.rs)
+- [What is `middleware` and how it works](./src/bin/middleware.rs)
+- [How to build a `JWT` middleware](./src/bin/jwt_middleware.rs)
 
 </br>
 
