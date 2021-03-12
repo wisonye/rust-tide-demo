@@ -3,7 +3,7 @@ use tide::{Response, StatusCode};
 
 ///
 fn generate_response(status_code: StatusCode) -> Response {
-    Response::builder(StatusCode::Unauthorized)
+    Response::builder(status_code)
         .header("Content-Type", "application/json")
         .body(serde_json::json!({
             "success": status_code.is_success(),

@@ -79,7 +79,7 @@ async fn main() -> tide::Result<()> {
     server.at("get-default-user").get(get_default_user);
     server.at("add-user").post(add_new_user);
 
-    // Start listening on speficied address and port
+    // Start listening on specified address and port
     let listen_to = "0.0.0.0:8080";
     println!("Server is listening on: {}\n", listen_to);
     server.listen(listen_to).await?;

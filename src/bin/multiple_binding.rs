@@ -14,7 +14,7 @@ async fn main() -> tide::Result<()> {
     // Sample hello get request handler
     server.at("/").get(|req: tide::Request<()>| async move {
         let response_message = format!(
-            "Hi, I got your reuqest which is from '{}'",
+            "Hi, I got your request which is from '{}'",
             req.url().to_string()
         );
         Ok(response_message)
