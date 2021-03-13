@@ -18,6 +18,7 @@ This repo will cover the following topics:
 - [How easy to deal with `status` code](./src/bin/status_code.rs)
 - [What is `middleware` and how it works](./src/bin/middleware.rs)
 - [How to build a `JWT` middleware](./src/bin/jwt_middleware.rs)
+- [Performance compare to `Node.JS`](./src/bin/jwt_middleware.rs)
 
 </br>
 
@@ -500,3 +501,235 @@ curl --header "Authorization: eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoie1wibmFtZVwiOlwiV
 ```
 </br>
 
+## 9. Performance compare to `Node.JS` HTTP server
+
+- Install the web benchmark tools below:
+
+    As `tide` use `async-h1` which doesn't support the old `HTTP 1.0`, that's why you can't use `ab`(ApacheBench), otherwise it will fail with **`error Unsupported HTTP version 1.0`**.
+
+    ```bash
+    # MacOS
+    brew install siege
+    brew install wrk
+
+    # Arch
+    sudo pacman --refresh --sync siege
+    sudo pacman --refresh --sync wrk
+    ```
+
+    </br>
+
+- `MacOS` settings:
+
+    If you're testing on `MacOS`, then you need to do the following settings below before you can start to benchmark testing:
+
+    ```bash
+    # Increase the max open files settings
+    sudo launchctl limit maxfiles 1000000 1000000
+
+    # Set the lower `start TCP random port` to avoid the default `16K` total TCP connection limit!!!
+    sudo sysctl -w net.inet.ip.portrange.first=2000
+    sudo sysctl -w net.inet.ip.portrange.hifirst=2000
+
+    # After that, you can run `sysctl -a | grep portrange` to confirm the new settings:
+    # It means you can have `65535 - 2000` = 63535 (63K) TCP connections during the testing
+    #
+    # net.inet.ip.portrange.lowlast: 600
+    # net.inet.ip.portrange.first: 2000
+    # net.inet.ip.portrange.last: 65535
+    # net.inet.ip.portrange.hifirst: 2000
+    # net.inet.ip.portrange.hilast: 65535
+    
+    # Finally, change the open file limit to the maximum setting:
+    # If you open a new terminal window (with new shell instance), then you need to run this command again!!!
+    ulimit -n 1000000
+
+    # Also, run `ulimit -a` the to confirm the new settings:
+    #
+    # Maximum size of core files created                           (kB, -c) 0
+    # Maximum size of a process’s data segment                     (kB, -d) unlimited
+    # Maximum size of files created by the shell                   (kB, -f) 1000000
+    # Maximum size that may be locked into memory                  (kB, -l) unlimited
+    # Maximum resident set size                                    (kB, -m) unlimited
+    # Maximum number of open file descriptors                          (-n) 1000000
+    # Maximum stack size                                           (kB, -s) 8192
+    # Maximum amount of cpu time in seconds                   (seconds, -t) unlimited
+    # Maximum number of processes available to a single user           (-u) 3546
+    # Maximum amount of virtual memory available to the shell      (kB, -v) unlimited
+    ```
+
+    </br>
+
+Let's build the same minimal HTTP server with `tide` and `Resify`, both of them have the following routes and responses:
+
+- `HTML` response (`Benchmark testing`) for the default route:
+
+- `JSON` response for the `json-benchmark` route:
+
+    ```json
+    {
+        "name":"Wison Ye",
+        "role":"Administrator",
+        "settings":{
+            "prefer_language":"English",
+            "reload_when_changed":true
+        }
+    }
+    ```
+
+</br>
+
+Build the production version:
+
+- `Tide` server:
+
+    ```bash
+    cargo build --bin benchmark_server --release
+    ```
+
+- `Resify` server:
+
+    ```bash
+    npm install restify restify-errors
+    ```
+
+</br>
+
+Below is the test output for the HTTP server:
+
+```bash
+curl http://127.0.0.1:8080
+# Benchmark testing.⏎ 
+
+curl http://127.0.0.1:8080/json-benchmark
+# {"name":"Wison Ye","role":"Administrator","settings":{"prefer_language":"English","reload_when_changed":true}}⏎                                                                                                                                                                            N  wison | /Users/wison   curl http://127.0.0.1:8080
+```
+
+</br>
+
+Let's run the benchmark testing:
+
+- `Tide`:
+
+    ```bash
+    ./target/release/benchmark_server
+    ```
+    
+
+    ![rust-process.png](./images/rust-process.png)
+
+    ```bash
+
+    # Open new terminal window
+    ulimit -n 1000000
+
+    # Default route
+    wrk --thread 8 --connections 5000 --duration 10s --latency http://127.0.0.1:8080
+    # Running 10s test @ http://127.0.0.1:8080
+    #   8 threads and 5000 connections
+    #   Thread Stats   Avg      Stdev     Max   +/- Stdev
+    #     Latency    10.61ms    7.36ms 440.40ms   90.42%
+    #     Req/Sec     7.34k     3.18k   32.52k    81.30%
+    #   Latency Distribution
+    #      50%    9.72ms
+    #      75%   16.18ms
+    #      90%   17.48ms
+    #      99%   18.79ms
+    #   542870 requests in 10.05s, 69.42MB read
+    #   Socket errors: connect 0, read 1239, write 0, timeout 0
+    # Requests/sec:  54013.24
+    # Transfer/sec:      6.91MB
+
+    # JSON route
+    wrk --thread 8 --connections 5000 --duration 10s --latency http://127.0.0.1:8080/json-benchmark
+    # Running 10s test @ http://127.0.0.1:8080/json-benchmark
+    #   8 threads and 5000 connections
+    #   Thread Stats   Avg      Stdev     Max   +/- Stdev
+    #     Latency    10.47ms    5.87ms 157.72ms   95.69%
+    #     Req/Sec     7.04k     3.97k   19.07k    73.36%
+    #   Latency Distribution
+    #      50%   10.72ms
+    #      75%   12.10ms
+    #      90%   13.94ms
+    #      99%   19.03ms
+    #   556841 requests in 10.05s, 116.33MB read
+    #   Socket errors: connect 0, read 801, write 0, timeout 0
+    # Requests/sec:  55422.33
+    # Transfer/sec:     11.58MB
+    ```
+
+</br>
+
+- `Resify`:
+
+    Node spwan 6 cluster workers to serve:
+
+    ```bash
+    node benchmark_server.js
+
+    # setupMaster Cluster worker amount: 6
+    # setupMaster Cluster worker "1" (PID: 10719) is online.
+    # setupMaster Cluster worker "3" (PID: 10721) is online.
+    # setupMaster Cluster worker "2" (PID: 10720) is online.
+    # setupMaster Cluster worker "4" (PID: 10722) is online.
+    # setupMaster Cluster worker "5" (PID: 10723) is online.
+    # setupMaster Cluster worker "6" (PID: 10724) is online.
+    # run Worker Process 3 (PID: 10721) |  "Benchmark Http Server" is running at http://127.0.0.1:8080
+    # setupMaster Cluster worker "3" (PID: 10721) is listening on 127.0.0.1:8080.
+    # run Worker Process 2 (PID: 10720) |  "Benchmark Http Server" is running at http://127.0.0.1:8080
+    # setupMaster Cluster worker "2" (PID: 10720) is listening on 127.0.0.1:8080.
+    # run Worker Process 6 (PID: 10724) |  "Benchmark Http Server" is running at http://127.0.0.1:8080
+    # setupMaster Cluster worker "6" (PID: 10724) is listening on 127.0.0.1:8080.
+    # run Worker Process 1 (PID: 10719) |  "Benchmark Http Server" is running at http://127.0.0.1:8080
+    # setupMaster Cluster worker "1" (PID: 10719) is listening on 127.0.0.1:8080.
+    # run Worker Process 4 (PID: 10722) |  "Benchmark Http Server" is running at http://127.0.0.1:8080
+    # setupMaster Cluster worker "4" (PID: 10722) is listening on 127.0.0.1:8080.
+    # run Worker Process 5 (PID: 10723) |  "Benchmark Http Server" is running at http://127.0.0.1:8080
+    # setupMaster Cluster worker "5" (PID: 10723) is listening on 127.0.0.1:8080.
+    ```
+ 
+    ![node-spawn-workers.png](./images/node-spawn-workers.png)
+
+
+    ```bash
+    # `/` default route
+    wrk --thread 8 --connections 5000 --duration 10s --latency http://127.0.0.1:8080/
+
+    Running 10s test @ http://127.0.0.1:8080/
+      8 threads and 5000 connections
+      Thread Stats   Avg      Stdev     Max   +/- Stdev
+        Latency     7.21ms    7.06ms 165.76ms   90.33%
+        Req/Sec    10.55k     5.94k   40.11k    80.46%
+      Latency Distribution
+         50%    5.57ms
+         75%    9.21ms
+         90%   14.07ms
+         99%   31.48ms
+      769416 requests in 10.06s, 151.16MB read
+      Socket errors: connect 0, read 1251, write 0, timeout 0
+    Requests/sec:  76466.35
+    Transfer/sec:     15.02MB
+    ```
+
+
+    ```bash
+    # `/json-benchmark` route
+    wrk --thread 8 --connections 5000 --duration 10s --latency http://127.0.0.1:8080/json-benchmark
+
+    Running 10s test @ http://127.0.0.1:8080/json-benchmark
+      8 threads and 5000 connections
+      Thread Stats   Avg      Stdev     Max   +/- Stdev
+        Latency     8.45ms    8.56ms 327.08ms   92.21%
+        Req/Sec     9.94k     4.52k   28.71k    73.51%
+      Latency Distribution
+         50%    6.66ms
+         75%    9.82ms
+         90%   15.27ms
+         99%   34.71ms
+      729305 requests in 10.06s, 206.57MB read
+      Socket errors: connect 0, read 1488, write 3, timeout 0
+    Requests/sec:  72481.25
+    Transfer/sec:     20.53MB
+    ```
+    
+    </br>

@@ -1,0 +1,24 @@
+{
+  "name": "rust-tide-demo",
+  "version": "1.0.0",
+  "description": "Why use `tide` to write HTTP/HTTPS server/service in `Rust`?",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wisonye/rust-tide-demo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wisonye/rust-tide-demo/issues"
+  },
+  "homepage": "https://github.com/wisonye/rust-tide-demo#readme",
+  "dependencies": {
+    "restify": "^8.5.1",
+    "restify-errors": "^8.0.2"
+  }
+}

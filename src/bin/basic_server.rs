@@ -69,6 +69,8 @@ async fn add_new_user(mut req: Request<()>) -> tide::Result<serde_json::value::V
 ///
 #[async_std::main]
 async fn main() -> tide::Result<()> {
+    // tide::log::start();
+
     println!("[ Basic Server Demo ]\n");
 
     // Create new server without any shared `State`,
